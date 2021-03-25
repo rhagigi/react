@@ -53,6 +53,11 @@ export type Context = {|
   minCommitDuration: number,
   setMinCommitDuration: (value: number) => void,
 
+  // group by component type in ranked view
+  groupByComponentTypeInRanked: boolean,
+  setGroupByComponentTypeInRanked: (value: boolean) => void,
+
+
   // Which commit is currently selected in the commit selector UI.
   // Note that this is the index of the commit in all commits (non-filtered) that were profiled.
   // This value is controlled by the commit selector UI in the Profiler toolbar.
@@ -212,6 +217,12 @@ function ProfilerContextController({children}: Props) {
     0,
   );
 
+
+  const [
+    groupByComponentTypeInRanked,
+    setGroupByComponentTypeInRanked,
+  ] = useLocalStorage<boolean>('React::DevTools::groupByComponentTypeInRanked', false);
+
   const [selectedCommitIndex, selectCommitIndex] = useState<number | null>(
     null,
   );
@@ -248,6 +259,10 @@ function ProfilerContextController({children}: Props) {
       stopProfiling,
       supportsProfiling,
 
+
+    groupByComponentTypeInRanked,
+    setGroupByComponentTypeInRanked,
+
       rootID,
       setRootID: setRootIDAndClearFiber,
 
@@ -277,6 +292,10 @@ function ProfilerContextController({children}: Props) {
       startProfiling,
       stopProfiling,
       supportsProfiling,
+
+
+    groupByComponentTypeInRanked,
+    setGroupByComponentTypeInRanked,
 
       rootID,
       setRootID,

@@ -106,16 +106,19 @@ export default class ProfilingCache {
     commitIndex,
     commitTree,
     rootID,
+    groupByComponentType
   }: {|
     commitIndex: number,
     commitTree: CommitTree,
     rootID: number,
+    groupByComponentType: boolean
   |}): RankedChartData =>
     getRankedChartData({
       commitIndex,
       commitTree,
       profilerStore: this._profilerStore,
       rootID,
+      groupByComponentType,
     });
 
   invalidate() {

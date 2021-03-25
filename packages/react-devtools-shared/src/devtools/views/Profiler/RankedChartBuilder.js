@@ -35,18 +35,20 @@ export function getChartData({
   commitTree,
   profilerStore,
   rootID,
+  groupByComponentType
 }: {|
   commitIndex: number,
   commitTree: CommitTree,
   profilerStore: ProfilerStore,
   rootID: number,
+  groupByComponentType: boolean,
 |}): ChartData {
   const commitDatum = profilerStore.getCommitData(rootID, commitIndex);
 
   const {fiberActualDurations, fiberSelfDurations} = commitDatum;
   const {nodes} = commitTree;
 
-  const chartDataKey = `${rootID}-${commitIndex}`;
+  const chartDataKey = `${rootID}-${commitIndex}-${groupByComponentType ? 'grouped': ''}`;
   if (cachedChartData.has(chartDataKey)) {
     return ((cachedChartData.get(chartDataKey): any): ChartData);
   }
@@ -54,42 +56,85 @@ export function getChartData({
   let maxSelfDuration = 0;
 
   const chartNodes: Array<ChartNode> = [];
-  fiberActualDurations.forEach((actualDuration, id) => {
-    const node = nodes.get(id);
 
-    if (node == null) {
-      throw Error(`Could not find node with id "${id}" in commit tree`);
-    }
+  if(groupByComponentType) {
+    const chartNodesByName = new Map();
+    fiberActualDurations.forEach((actualDuration, id) => {
+      const node = nodes.get(id);
 
-    const {displayName, key, parentID, type} = node;
+      if (node == null) {
+        throw Error(`Could not find node with id "${id}" in commit tree`);
+      }
 
-    // Don't show the root node in this chart.
-    if (parentID === 0) {
-      return;
-    }
-    const selfDuration = fiberSelfDurations.get(id) || 0;
-    maxSelfDuration = Math.max(maxSelfDuration, selfDuration);
+      const {displayName, key, parentID, type} = node;
 
-    const name = displayName || 'Anonymous';
-    const maybeKey = key !== null ? ` key="${key}"` : '';
+      // Don't show the root node in this chart.
+      if (parentID === 0) {
+        return;
+      }
 
-    let maybeBadge = '';
-    if (type === ElementTypeForwardRef) {
-      maybeBadge = ' (ForwardRef)';
-    } else if (type === ElementTypeMemo) {
-      maybeBadge = ' (Memo)';
-    }
+      const name = displayName || 'Anonymous';
+      const selfDuration = fiberSelfDurations.get(id) || 0;
 
-    const label = `${name}${maybeBadge}${maybeKey} (${formatDuration(
-      selfDuration,
-    )}ms)`;
-    chartNodes.push({
-      id,
-      label,
-      name,
-      value: selfDuration,
+      const currentValue = chartNodesByName.get(name) ?? {count: 0, totalDuration: 0};
+      chartNodesByName.set(name, {
+        count: currentValue.count+1,
+        totalDuration: currentValue.totalDuration + selfDuration
+      });
     });
-  });
+    chartNodesByName.forEach((value, name) => {
+      const label = `${name}(x${value.count}) (${formatDuration(
+        value.totalDuration,
+      )}ms)`;
+
+      maxSelfDuration = Math.max(maxSelfDuration, value.totalDuration);
+      chartNodes.push({
+        name,// not sure about this one
+        label,
+        label,
+        value: value.totalDuration,
+      });
+    });
+  } else {
+    fiberActualDurations.forEach((actualDuration, id) => {
+      const node = nodes.get(id);
+
+      if (node == null) {
+        throw Error(`Could not find node with id "${id}" in commit tree`);
+      }
+
+      const {displayName, key, parentID, type} = node;
+
+      // Don't show the root node in this chart.
+      if (parentID === 0) {
+        return;
+      }
+      const selfDuration = fiberSelfDurations.get(id) || 0;
+      maxSelfDuration = Math.max(maxSelfDuration, selfDuration);
+
+      const name = displayName || 'Anonymous';
+      const maybeKey = key !== null ? ` key="${key}"` : '';
+
+      let maybeBadge = '';
+      if (type === ElementTypeForwardRef) {
+        maybeBadge = ' (ForwardRef)';
+      } else if (type === ElementTypeMemo) {
+        maybeBadge = ' (Memo)';
+      }
+
+      const label = `${name}${maybeBadge}${maybeKey} (${formatDuration(
+        selfDuration,
+      )}ms)`;
+      chartNodes.push({
+        id,
+        label,
+        name,
+        value: selfDuration,
+      });
+    });
+  }
+
+
 
   const chartData = {
     maxValue: maxSelfDuration,

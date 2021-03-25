@@ -21,6 +21,8 @@ export default function ProfilerSettings(_: {||}) {
     minCommitDuration,
     setIsCommitFilterEnabled,
     setMinCommitDuration,
+    groupByComponentTypeInRanked,
+    setGroupByComponentTypeInRanked
   } = useContext(ProfilerContext);
   const store = useContext(StoreContext);
 
@@ -44,6 +46,7 @@ export default function ProfilerSettings(_: {||}) {
     },
     [store],
   );
+
   const updateMinCommitDuration = useCallback(
     (event: SyntheticEvent<HTMLInputElement>) => {
       const newValue = parseFloat(event.currentTarget.value);
@@ -64,6 +67,14 @@ export default function ProfilerSettings(_: {||}) {
       }
     },
     [setIsCommitFilterEnabled],
+  );
+
+  const updateGroupByComponentTypeInRanked = useCallback(
+    (event: SyntheticEvent<HTMLInputElement>) => {
+      const checked = event.currentTarget.checked;
+      setGroupByComponentTypeInRanked(checked);
+    },
+    [setGroupByComponentTypeInRanked],
   );
 
   const minCommitDurationInputRef = useRef<HTMLInputElement | null>(null);
@@ -98,6 +109,16 @@ export default function ProfilerSettings(_: {||}) {
           value={minCommitDuration}
         />{' '}
         (ms)
+      </div>
+      <div className={styles.Setting}>
+        <label>
+          <input
+            type="checkbox"
+            checked={groupByComponentTypeInRanked}
+            onChange={updateGroupByComponentTypeInRanked}
+          />{' '}
+          Group by component type in Ranked view
+        </label>
       </div>
     </div>
   );

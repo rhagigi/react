@@ -40,7 +40,7 @@ export type ItemData = {|
 
 export default function CommitRankedAutoSizer(_: {||}) {
   const {profilerStore} = useContext(StoreContext);
-  const {rootID, selectedCommitIndex, selectFiber} = useContext(
+  const {rootID, selectedCommitIndex, selectFiber, groupByComponentTypeInRanked} = useContext(
     ProfilerContext,
   );
   const {profilingCache} = profilerStore;
@@ -65,9 +65,10 @@ export default function CommitRankedAutoSizer(_: {||}) {
       commitIndex: selectedCommitIndex,
       commitTree,
       rootID: ((rootID: any): number),
+      groupByComponentType: groupByComponentTypeInRanked,
     });
   }
-
+  
   if (commitTree != null && chartData != null && chartData.nodes.length > 0) {
     return (
       <div className={styles.Container} onClick={deselectCurrentFiber}>
